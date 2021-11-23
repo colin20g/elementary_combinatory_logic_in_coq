@@ -63,13 +63,18 @@ Section main.
       Defined.
       
       Definition no_infinite_reduction_sequence_if_strongly_normalizable_with_types:
-        forall x:SK_Term,
+        forall (Error:Type) (u: nat -> SK_Term),          
+          strongly_normalizable (u 0) ->
+          (forall n:nat, direct_reduction (u n) (u (S n))) ->
+          Error.
+
+        (*forall x:SK_Term,
           strongly_normalizable x
                          ->
                          forall (T:Type) (f:nat -> SK_Term),
                            (f 0 = x) ->
                             (forall n:nat, (direct_reduction (f n) (f (S n)))) ->
-                           T.
+                           T.*)
       Proof.
         assert (let aux := fun (u:SK_Term) =>
                              forall (T:Type) (f:nat -> SK_Term),
@@ -86,21 +91,30 @@ Section main.
         apply X0.
         reflexivity.
         intros; apply X0.
-        simpl in L.
-        apply L.
+        simpl in L. intros Error u snu0.
+        apply L with (x:= u 0). assumption. reflexivity.
       Defined.
 
       Theorem no_infinite_reduction_sequence_if_strongly_normalizable:
-        forall x:SK_Term,
+        forall u: nat -> SK_Term,
+          strongly_normalizable (u 0) ->
+          (forall n:nat, direct_reduction (u n) (u (S n))) ->
+          False.
+(*        forall x:SK_Term,
           strongly_normalizable x
                          ->
                          inhabited
                            {f:nat -> SK_Term &
                                      prod (f 0 = x) 
                                           (forall n:nat,
-                                              (direct_reduction (f n) (f (S n))))} -> False.
+                                              (direct_reduction (f n) (f (S n))))} -> False.*)
       Proof.
         intros.
+        apply no_infinite_reduction_sequence_if_strongly_normalizable_with_types
+          with (u:=u). assumption. assumption.
+      Defined.
+        
+       (*
         destruct H.
         destruct X as (t,r).
         destruct X0 as (f,e).
@@ -110,7 +124,7 @@ Section main.
         assumption.
         apply e.
         apply e.
-      Defined.
+      Defined.*)
       
     End Strong_normalizability.
 
@@ -591,7 +605,7 @@ Section main.
           CT_direct_reduction a x x' ->
           CT_direct_reduction b (ctskt_app a b f x) (ctskt_app a b f x').          
 
-      Fixpoint tj_direct_reduction_forward
+      Fixpoint direct_subject_reduction
                (x y:SK_Term) (a:T)
                (r:direct_reduction x y)
                (j: |- x ; a)
@@ -617,13 +631,13 @@ Section main.
         rewrite H11; assumption.
         inversion j.
         apply tj_arrow with (a:=a1).
-        apply tj_direct_reduction_forward with (x:=a0); assumption. assumption.
+        apply direct_subject_reduction with (x:=a0); assumption. assumption.
         inversion j.
         apply tj_arrow with (a:=a1).
-        assumption. apply tj_direct_reduction_forward with (x:=b); assumption.
+        assumption. apply direct_subject_reduction with (x:=b); assumption.
       Defined.      
         
-      Definition tj_beta_reduction_forward: forall (x y:SK_Term) (a:T),
+      Definition subject_reduction: forall (x y:SK_Term) (a:T),
           beta_reduction x y -> (|- x ; a) -> (|- y ; a).
       Proof.
         assert (let aux := fun (m n:SK_Term) =>
@@ -634,7 +648,7 @@ Section main.
         apply beta_reduction_rect.
         intros; assumption.
         intros.
-        apply tj_direct_reduction_forward with (x:=y).
+        apply direct_subject_reduction with (x:=y).
         assumption. apply X. assumption.
         simpl in L. intros. apply L with (x:=x). assumption. assumption.
       Defined.
@@ -731,7 +745,7 @@ Section main.
       
     End Typing_judgements.
     
-    End definition_of_combinators.
+  End definition_of_combinators.
 
   Section Tait.
 
@@ -1124,7 +1138,7 @@ Section main.
 
         Notation j_forward :=
           (fun (x y:C) (a:T) (r: x>d y) (j: |- x;a) =>
-             (tj_direct_reduction_forward A SL aux_sort_assignment x y a r j)).       
+             (direct_subject_reduction A SL aux_sort_assignment x y a r j)).       
 
         
         Definition rk_destructor
@@ -1177,7 +1191,7 @@ Section main.
           split.
           reflexivity.
           assumption.
-          apply tj_direct_reduction_forward with (x:=x).
+          apply direct_subject_reduction with (x:=x).
           assumption.          
           assumption.
           intros.
@@ -1188,7 +1202,7 @@ Section main.
           reflexivity.
           assumption.
           exists (
-              tj_direct_reduction_forward
+              direct_subject_reduction
                 A SL aux_sort_assignment
                 y y' a X jq                          
             ).
@@ -1454,7 +1468,7 @@ Section main.
           split.
           reflexivity.
           assumption.
-          apply tj_direct_reduction_forward with (x:=x).
+          apply direct_subject_reduction with (x:=x).
           assumption.          
           assumption.
           intros.
@@ -1465,7 +1479,7 @@ Section main.
           reflexivity.
           assumption.
           exists (
-              tj_direct_reduction_forward
+              direct_subject_reduction
                 A SL aux_sort_assignment
                 y y' a X jq                          
             ).
@@ -1994,9 +2008,30 @@ Section main.
       apply auxiliary_context_tj_embedding.
       assumption.
     Defined.
-      
-  End Tait.
 
+    Definition no_infinite_reduction_sequence_if_typable_with_types:
+        forall (Error:Type) (u: nat -> SK_Term Ctxt) (t: SK_sort SL),          
+          Typing_Judgement Ctxt SL sort_assignment t (u 0) ->
+          (forall n:nat, direct_reduction Ctxt (u n) (u (S n))) ->
+          Error.
+    Proof.
+      intros Error u t j.
+      apply no_infinite_reduction_sequence_if_strongly_normalizable_with_types.
+      apply Tait_strong_normalization_theorem with (t:=t). assumption.
+    Defined.
+
+    Theorem no_infinite_reduction_sequence_if_typable:
+        forall (u: nat -> SK_Term Ctxt) (t: SK_sort SL),          
+          Typing_Judgement Ctxt SL sort_assignment t (u 0) ->
+          (forall n:nat, direct_reduction Ctxt (u n) (u (S n))) ->
+          False.
+    Proof.
+      intros u t j.
+      apply no_infinite_reduction_sequence_if_strongly_normalizable.
+      apply Tait_strong_normalization_theorem with (t:=t). assumption.
+    Defined.
+    
+  End Tait.
 
   Section An_elementary_abstraction_operator.
 
