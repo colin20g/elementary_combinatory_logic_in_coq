@@ -36,10 +36,10 @@ Section main.
     |dr_right: forall a b b':SK_Term,
         direct_reduction b b' -> direct_reduction (a ° b) (a ° b').
 
-    Inductive beta_reduction: SK_Term -> SK_Term -> Type:=
-    |br_refl: forall x:SK_Term, beta_reduction x x
+    Inductive weak_reduction: SK_Term -> SK_Term -> Type:=
+    |br_refl: forall x:SK_Term, weak_reduction x x
     |br_step: forall x y z:SK_Term,
-        beta_reduction x y -> direct_reduction y z -> beta_reduction x z.
+        weak_reduction x y -> direct_reduction y z -> weak_reduction x z.
 
     Section Strong_normalizability.
 
@@ -129,14 +129,14 @@ Section main.
     End Strong_normalizability.
 
     Definition br_transitivity: forall x y z:SK_Term,
-        beta_reduction x y -> beta_reduction y z -> beta_reduction x z.
+        weak_reduction x y -> weak_reduction y z -> weak_reduction x z.
     Proof.
       assert (let aux:= fun p q:SK_Term => forall r:SK_Term,
-                            beta_reduction r p -> beta_reduction r q
+                            weak_reduction r p -> weak_reduction r q
               in
           forall (m n:SK_Term),
-                 beta_reduction m n -> aux m n) as L.
-      apply beta_reduction_rect.
+                 weak_reduction m n -> aux m n) as L.
+      apply weak_reduction_rect.
       intros; assumption.
       intros.
       apply br_step with (y:=y).
@@ -151,14 +151,14 @@ Section main.
     Defined.
 
     Definition br_right: forall x y y':SK_Term,
-        beta_reduction y y' -> beta_reduction  (x ° y) (x ° y').
+        weak_reduction y y' -> weak_reduction  (x ° y) (x ° y').
     Proof.
       assert (let aux:= fun p q:SK_Term => forall r:SK_Term,
-                            beta_reduction (r ° p) (r ° q)
+                            weak_reduction (r ° p) (r ° q)
               in
           forall (m n:SK_Term),
-                 beta_reduction m n -> aux m n) as L.
-      apply beta_reduction_rect.
+                 weak_reduction m n -> aux m n) as L.
+      apply weak_reduction_rect.
       intros; apply br_refl.
       intros.
       apply br_step with (y:= r ° y).
@@ -170,14 +170,14 @@ Section main.
     Defined.
 
     Definition br_left: forall x x' y:SK_Term,
-        beta_reduction x x' -> beta_reduction (x ° y) (x' ° y).
+        weak_reduction x x' -> weak_reduction (x ° y) (x' ° y).
     Proof.
       assert (let aux:= fun p q:SK_Term => forall r:SK_Term,
-                            beta_reduction (p ° r) (q ° r)
+                            weak_reduction (p ° r) (q ° r)
               in
           forall (m n:SK_Term),
-                 beta_reduction m n -> aux m n) as L.
-      apply beta_reduction_rect.
+                 weak_reduction m n -> aux m n) as L.
+      apply weak_reduction_rect.
       intros; apply br_refl.
       intros.
       apply br_step with (y:= y ° r).
@@ -189,9 +189,9 @@ Section main.
     Defined.
         
     Definition br_leftright: forall x x' y y':SK_Term,
-        beta_reduction x x' ->
-        beta_reduction y y' ->
-        beta_reduction (x ° y) (x' ° y').
+        weak_reduction x x' ->
+        weak_reduction y y' ->
+        weak_reduction (x ° y) (x' ° y').
     Proof.
       intros.
       apply br_transitivity with (y:= x' ° y).
@@ -203,7 +203,7 @@ Section main.
 
     Definition skt_i:= s ° k ° k.
 
-    Definition br_k: forall a b:SK_Term, beta_reduction (k ° a ° b) a.
+    Definition br_k: forall a b:SK_Term, weak_reduction (k ° a ° b) a.
     Proof.
       intros.
       apply br_step with (y:= k ° a ° b).
@@ -211,7 +211,7 @@ Section main.
       apply dr_k.
     Defined.
 
-    Definition br_s: forall a b c:SK_Term, beta_reduction (s ° a ° b ° c) (a ° c ° (b ° c)).
+    Definition br_s: forall a b c:SK_Term, weak_reduction (s ° a ° b ° c) (a ° c ° (b ° c)).
     Proof.
       intros.
       apply br_step with (y:= s ° a ° b ° c).
@@ -219,7 +219,7 @@ Section main.
       apply dr_s.
     Defined.
     
-    Definition br_i: forall x:SK_Term, beta_reduction (skt_i ° x) x.
+    Definition br_i: forall x:SK_Term, weak_reduction (skt_i ° x) x.
     Proof.
       intros.
       unfold skt_i.
@@ -229,7 +229,7 @@ Section main.
     Defined.
 
     Section Confluence.
-      (** In this section we prove that the beta reduction relationship on combinators is 
+      (** In this section we prove that the weak reduction relationship on combinators is 
        confluent. This is done with the help of a new reduction relationship for which
        the result is esaier to prove, then we prove both relationships are equivalent. *)
       
@@ -247,7 +247,7 @@ Section main.
       |pr_step: forall x y z:SK_Term,
           parallel_reduction x y -> direct_parallel_reduction y z -> parallel_reduction x z.
 
-      Definition direct_beta_to_direct_parallel: forall x y:SK_Term,
+      Definition direct_weak_to_direct_parallel: forall x y:SK_Term,
           direct_reduction x y -> direct_parallel_reduction x y.
       Proof.
         apply direct_reduction_rect.
@@ -263,21 +263,21 @@ Section main.
         assumption.
       Defined.
 
-      Definition beta_to_parallel: forall x y:SK_Term,
-          beta_reduction x y -> parallel_reduction x y.
+      Definition weak_to_parallel: forall x y:SK_Term,
+          weak_reduction x y -> parallel_reduction x y.
       Proof.
-        apply beta_reduction_rect.
+        apply weak_reduction_rect.
         apply pr_refl.
         intros.
         apply pr_step with (y:=y).
         assumption.
-        apply direct_beta_to_direct_parallel.
+        apply direct_weak_to_direct_parallel.
         assumption.
       Defined.
 
-      Definition direct_parallel_to_beta: 
+      Definition direct_parallel_to_weak: 
         forall x y:SK_Term,
-          direct_parallel_reduction x y -> beta_reduction x y.
+          direct_parallel_reduction x y -> weak_reduction x y.
       Proof.
         apply direct_parallel_reduction_rect.
         apply br_refl.
@@ -289,16 +289,16 @@ Section main.
         assumption.
       Defined.
 
-      Definition parallel_to_beta: 
+      Definition parallel_to_weak: 
         forall x y:SK_Term,
-          parallel_reduction x y -> beta_reduction x y.
+          parallel_reduction x y -> weak_reduction x y.
       Proof.
         apply parallel_reduction_rect.
         apply br_refl.
         intros.
         apply br_transitivity with (y:=y).
         assumption.
-        apply direct_parallel_to_beta.
+        apply direct_parallel_to_weak.
         assumption.
       Defined.
         
@@ -481,17 +481,17 @@ Section main.
       Defined.
         
       Definition Church_Rosser: forall a b c:SK_Term,
-          beta_reduction a b -> 
-          beta_reduction a c ->
-          {d:SK_Term & prod (beta_reduction b d) (beta_reduction c d)}.
+          weak_reduction a b -> 
+          weak_reduction a c ->
+          {d:SK_Term & prod (weak_reduction b d) (weak_reduction c d)}.
       Proof.
         intros.
         destruct parallel_Church_Rosser with (a:=a) (b:=b) (c:=c) as (f,P).
-        apply beta_to_parallel; assumption.
-        apply beta_to_parallel; assumption.
+        apply weak_to_parallel; assumption.
+        apply weak_to_parallel; assumption.
         exists f. split.
-        apply parallel_to_beta; apply P.
-        apply parallel_to_beta; apply P.
+        apply parallel_to_weak; apply P.
+        apply parallel_to_weak; apply P.
       Defined.         
         
     End Confluence.
@@ -638,14 +638,14 @@ Section main.
       Defined.      
         
       Definition subject_reduction: forall (x y:SK_Term) (a:T),
-          beta_reduction x y -> (|- x ; a) -> (|- y ; a).
+          weak_reduction x y -> (|- x ; a) -> (|- y ; a).
       Proof.
         assert (let aux := fun (m n:SK_Term) =>
                              forall a:T, (|- m ; a) -> (|- n ; a)
                 in
-                forall x y:SK_Term, beta_reduction x y -> aux x y            
+                forall x y:SK_Term, weak_reduction x y -> aux x y            
                ) as L.
-        apply beta_reduction_rect.
+        apply weak_reduction_rect.
         intros; assumption.
         intros.
         apply direct_subject_reduction with (x:=y).
@@ -773,7 +773,7 @@ Section main.
         (Typing_Judgement Auxiliary_context SL aux_sort_assignment q p) (at level 62).
       Notation A:= Auxiliary_context.
       Notation "m >d n":= (direct_reduction A m n) (at level 63).
-      Notation "m >b n":= (beta_reduction A m n) (at level 63).
+      Notation "m >b n":= (weak_reduction A m n) (at level 63).
       Notation SN:= (fun x:C => strongly_normalizable A x).
 
       Fixpoint strongly_computable (a:T)(x:C)(j:|- x;a){struct a}:Type.
@@ -2049,7 +2049,7 @@ Section main.
       (Typing_Judgement Ctxt SL sort_assignment q p) (at level 62).
     Notation A:= Ctxt.
     Notation "m >d n":= (direct_reduction A m n) (at level 63).
-    Notation "m >b n":= (beta_reduction A m n) (at level 63).
+    Notation "m >b n":= (weak_reduction A m n) (at level 63).
 
     (** this is a crude and *highly* unoptimized example of abstraction operator we 
      include for its simplicity, its purpose is often to prove that SK is Turing complete
@@ -2158,7 +2158,7 @@ Section main.
     Notation var:= (skt_letter Ctxt).
     Notation "a ° b" := (skt_app Ctxt a b) (left associativity, at level 51).
     Notation "m >d n":= (direct_reduction Ctxt m n) (at level 63).
-    Notation "m >b n":= (beta_reduction Ctxt m n) (at level 63).
+    Notation "m >b n":= (weak_reduction Ctxt m n) (at level 63).
     Notation i:= (skt_i Ctxt).
 
     Ltac bt h:= apply br_transitivity with (y:=h).
@@ -2645,11 +2645,11 @@ Section main.
         assumption. assumption.
         assert (let aux := fun (a b:C) => k = a -> k = b in
                 forall a b:C, a >b b -> aux a b) as RK.
-        apply beta_reduction_ind. intros; assumption.
+        apply weak_reduction_ind. intros; assumption.
         intros. apply H in H0. rewrite <- H0 in d. inversion d. simpl in RK.
         assert (let aux := fun (a b:C) => k ° i = a -> k ° i = b in
                 forall a b:C, a >b b -> aux a b) as RKI.
-        apply beta_reduction_ind. intros; assumption.
+        apply weak_reduction_ind. intros; assumption.
         intros. apply H in H0. rewrite <- H0 in d. inversion d. inversion X1. apply f_equal.
         inversion X1. inversion X2. inversion X3. inversion X3. inversion X2. simpl in RKI.
         destruct p as (r1,r2). apply RK in r1. apply RKI in r2. rewrite <- r1 in r2.
