@@ -18,7 +18,8 @@ which starts from a typable term is finite.
 
 -An abstraction operator: basically the simplest one: a new letter is added to the context C with the coq "option" operator and we 
 define for any term f, lambda f := SKK if f= None (the new variable), lambda f := S(lambda g)(lambda h) if f=gh and lambda f = Kf in any 
-other case (namely if f=S,K, or "Some v" when v is aconstant in C).
+other case (namely if f=S,K, or "Some v" when v is a constant in C). For every term t we then show that (lambda f)t is reduced to f[None := t]
+where g[y:=u] denotes te term obtained by replacing every occurrence of the letter y in the term g by the term u.  
 
 -a fixed point combinator
 
