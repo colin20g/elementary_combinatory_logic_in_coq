@@ -2,7 +2,7 @@
 combinatory logic with coq
 
 Copyright Colin20g 
-November 2021
+July 2022
 
 Compilation instructions: put the file in any folder and enter the command coqc combinatory_logic.v
 
