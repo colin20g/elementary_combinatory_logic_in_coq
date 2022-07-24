@@ -26,3 +26,6 @@ where g[y:=u] denotes te term obtained by replacing every occurrence of the lett
 -Church integers and basic arithmetic operations on them
 
 -The Rice theorem (for his formalism): there are no non constant maps taking their values in the booleans in combinatory logic.
+
+-The standardization theorem and the fact that the strategy consisting in succesively contracting the leftmost redex in 
+a term eventually produces the unique normal form of the term, if the term has a normal form (in the program, "normal form" is called "irredcucible").
